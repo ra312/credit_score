@@ -131,16 +131,14 @@ def load_data(filename):
 
 #
 
-def preprocessing_fn(data, label_column, metadata):
-   # categorical_columns = [n for n in metadata if metadata[n] == tf.string]
-   # numeric_columns = [n for n in metadata if metadata[n] != tf.string]
-   column_names = metadata.keys()
-   types = set(metadata.values())
+def process_data_to_tfrecord(data, label_column, metadata):
 
 
    float_columns = [column_name for column_name in metadata.keys() if metadata[column_name].name.startswith('float')]
    int_columns = [column_name for column_name in metadata.keys() if metadata[column_name].name.startswith('int')]
    byte_columns = [column_name for column_name in metadata.keys() if metadata[column_name].name.startswith('string')]
+   tf_records_file = 'loan'+'.tfrecord'
+   records_writer = tf.io.TFRecordWriter(tf_records_file)
    for line in data.as_numpy_iterator():
       print(type(line))
       print(line[0])
@@ -149,17 +147,19 @@ def preprocessing_fn(data, label_column, metadata):
       raw_features = line[0]
       raw_label = line[1]
       for column_name in raw_features.keys():
-         values = raw_features[column_name]
+         values = list(raw_features[column_name])
          if column_name in float_columns:
             feature[column_name]=tf.train.Feature(float_list=tf.train.FloatList(value=values))
          elif column_name in int_columns:
             feature[column_name] = tf.train.Feature(int64_list=tf.train.Int64List(value=values))
          elif column_name in byte_columns:
             feature[column_name] = tf.train.Feature(bytes_list=tf.train.BytesList(value=values))
-      label_values = raw_label[label_column]
+      label_values = list(raw_label)
       feature['label']=tf.train.Feature(bytes_list=tf.train.BytesList(value=label_values))
-
-
+      example = tf.train.Example(features=tf.train.Features(feature=feature))
+      records_writer.write(example.SerializeToString())
+   records_writer.close()
+   return tf_records_file
    # X = data[[label_column]]
    # Y =
 #   """Preprocess input columns into transformed columns."""
@@ -204,7 +204,7 @@ def build_model():
 if __name__ == '__main__':
    filename = 'loan_10.csv'
    data, metadata = load_data(filename=filename)
-   X_train, X_test, Y_train, Y_test = preprocessing_fn(data=data, label_column='loan_status',metadata=metadata)
+   tfrecord_file = process_data_to_tfrecord(data=data, label_column='loan_status', metadata=metadata)
    rf = build_model()
 
 
