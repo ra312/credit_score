@@ -1,14 +1,34 @@
-import tensorflow as tf
+import os
 import csv
 import numpy as np
-from tensorflow.python.lib.io import file_io
-from tensorflow.keras.wrappers import scikit_learn as sklearn_tf_wrapper
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import cross_val_score, GridSearchCV
 
+from sklearn.preprocessing import LabelEncoder
+import tensorflow as tf
+from tensorflow.python.lib.io import file_io
 from tensorflow.python.framework import dtypes
-# import tensorflow_transform as tft
-from sklearn.preprocessing import MinMaxScaler,StandardScaler
+
+from tensorflow.keras import regularizers
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.callbacks import TensorBoard
+from tensorflow.keras.layers import Activation
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import Flatten
+from tensorflow.keras.layers import Conv1D
+from tensorflow.keras.layers import GlobalAveragePooling1D
+from tensorflow.keras.layers import InputLayer
+from tensorflow.keras.layers import Lambda
+from tensorflow.keras.layers import LayerNormalization
+from tensorflow.keras.layers import TimeDistributed
+from tensorflow.keras.losses import SparseCategoricalCrossentropy
+from tensorflow.keras.metrics import SparseCategoricalAccuracy
+from tensorflow.keras.models import Sequential
+
+
+
+
+
+
+data_folder = 'data'
 
 train_hyperparameters = {
    'batch_size': 5,
@@ -113,15 +133,16 @@ def infer_column_names_and_types(filename, num_rows_for_inference=150):
 
 
 def load_data(filename):
+   full_filename = os.path.join(data_folder,filename)
    batch_size = train_hyperparameters['batch_size']
    num_epochs = train_hyperparameters['num_epochs']
-   metadata = infer_column_names_and_types(filename=filename)
+   metadata = infer_column_names_and_types(filename=full_filename)
    column_names = metadata.keys()
    label_name = 'loan_status'
    if label_name not in column_names:
       print(f'The label {label_name} not found in {column_names}')
       exit(-1)
-   df = tf.data.experimental.make_csv_dataset(filename, batch_size=batch_size,
+   df = tf.data.experimental.make_csv_dataset(full_filename, batch_size=batch_size,
                                               column_names=column_names,
                                               label_name=label_name,
                                               num_epochs=num_epochs, ignore_errors=True)
@@ -131,18 +152,20 @@ def load_data(filename):
 
 #
 
-def process_data_to_tfrecord(data, label_column, metadata):
-
-
+def process_data_to_tfrecord(data, metadata):
+   encoder = LabelEncoder()
    float_columns = [column_name for column_name in metadata.keys() if metadata[column_name].name.startswith('float')]
    int_columns = [column_name for column_name in metadata.keys() if metadata[column_name].name.startswith('int')]
-   byte_columns = [column_name for column_name in metadata.keys() if metadata[column_name].name.startswith('string')]
-   tf_records_file = 'loan'+'.tfrecord'
-   records_writer = tf.io.TFRecordWriter(tf_records_file)
+   string_columns = [column_name for column_name in metadata.keys() if metadata[column_name].name.startswith('string')]
+
+
+   tfrecord_file = 'loan'+'.tfrecord'
+   full_tfrecord_file = os.path.join(data_folder,tfrecord_file)
+   records_writer = tf.io.TFRecordWriter(full_tfrecord_file)
    for line in data.as_numpy_iterator():
-      print(type(line))
-      print(line[0])
-      print(line[0].keys())
+      # print(type(line))
+      # print(line[0])
+      # print(line[0].keys())
       feature = {}
       raw_features = line[0]
       raw_label = line[1]
@@ -152,72 +175,65 @@ def process_data_to_tfrecord(data, label_column, metadata):
             feature[column_name]=tf.train.Feature(float_list=tf.train.FloatList(value=values))
          elif column_name in int_columns:
             feature[column_name] = tf.train.Feature(int64_list=tf.train.Int64List(value=values))
-         elif column_name in byte_columns:
-            feature[column_name] = tf.train.Feature(bytes_list=tf.train.BytesList(value=values))
+         elif column_name in string_columns:
+            values = encoder.fit_transform(values)
+            feature[column_name] = tf.train.Feature(int64_list=tf.train.Int64List(value=values))
       label_values = list(raw_label)
-      feature['label']=tf.train.Feature(bytes_list=tf.train.BytesList(value=label_values))
+      label_values = encoder.fit_transform(label_values)
+      feature['label']=tf.train.Feature(int64_list=tf.train.Int64List(value=label_values))
       example = tf.train.Example(features=tf.train.Features(feature=feature))
       records_writer.write(example.SerializeToString())
    records_writer.close()
-   return tf_records_file
-   # X = data[[label_column]]
-   # Y =
-#   """Preprocess input columns into transformed columns."""
-#   # Since we are modifying some features and leaving others unchanged, we
-#   # start by setting `outputs` to a copy of `inputs.
-#   outputs = inputs.copy()
-#
-#   # Scale numeric columns to have range [0, 1].
-#   for key in NUMERIC_FEATURE_KEYS:
-#     outputs[key] = tft.scale_to_0_1(outputs[key])
-#
-#
-#   # For all categorical columns except the label column, we generate a
-#   # vocabulary but do not modify the feature.  This vocabulary is instead
-#   # used in the trainer, by means of a feature column, to convert the feature
-#   # from a string to an integer id.
-#   for key in CATEGORICAL_FEATURE_KEYS:
-#     tft.vocabulary(inputs[key], vocab_filename=key)
-#
-#   # For the label column we provide the mapping from string to index.
-#   initializer = tf.lookup.KeyValueTensorInitializer(
-#       keys=['>50K', '<=50K'],
-#       values=tf.cast(tf.range(2), tf.int64),
-#       key_dtype=tf.string,
-#       value_dtype=tf.int64)
-#   table = tf.lookup.StaticHashTable(initializer, default_value=-1)
-#
-#   outputs[LABEL_KEY] = table.lookup(outputs[LABEL_KEY])
-#
-#   return outputs
-   X_train  = data
-   X_test = data
-   Y_train = data
-   Y_test = data
-   return X_train, X_test, Y_train, Y_test
+   return full_tfrecord_file
+def load_process_tf_records(filename, metadata):
 
-def build_model():
-   rf = RandomForestRegressor(**rf_regr_parameters)
-   return rf
+   full_filename = os.path.join(data_folder,filename)
+   DATASET_SIZE = 10000 #dummy value
+   train_size = int(0.7 * DATASET_SIZE)
+   val_size = int(0.15 * DATASET_SIZE)
+   test_size = int(0.15 * DATASET_SIZE)
+
+   full_dataset = tf.data.TFRecordDataset(full_filename)
+   feature_description = {}
+   for column in metadata.keys():
+      if metadata[column].name.startswith('int'):
+         feature_description[column]=tf.io.VarLenFeature(tf.int64)
+      elif metadata[column].name.startswith('float'):
+         feature_description[column] = tf.io.VarLenFeature(tf.float64)
+   feature_description['label']=tf.io.FixedLenFeature([], tf.int64, default_value=0)
+   def parse_protobuf(protobuf):
+      example = tf.io.parse_example(protobuf, feature_description)
+   full_dataset = full_dataset.shuffle(buffer_size=1024)
+
+   train_dataset = full_dataset.take(train_size)
+   test_dataset = full_dataset.skip(train_size)
+   test_dataset = test_dataset.take(test_size)
+   val_dataset = test_dataset.skip(val_size)
+
+
+   return train_dataset, test_dataset, val_dataset
+
+def compile_model(input_dimension, batch_size):
+   # input_dim = 8*n, n - the depth of the network
+   model = Sequential()
+   model.add(Flatten(input_shape=[batch_size, input_dimension]))
+   model.add(Dense(units=input_dimension, activation='relu'))
+   n = int(input_dimension/8.0)
+   model.add(Dense(units=n, activation='relu'))
+   model.add(Dense(units=5, activation='softmax'))
+   model.compile(loss="sparse_categorical_crossentropy",
+                 optimizer="sgd",
+                 metrics=["accuracy"])
+
+   return model
 
 
 if __name__ == '__main__':
-   filename = 'loan_10.csv'
+   filename = 'loan_10k.csv'
    data, metadata = load_data(filename=filename)
-   tfrecord_file = process_data_to_tfrecord(data=data, label_column='loan_status', metadata=metadata)
-   rf = build_model()
-
-
-# def infer_csv_columns(filename):
-#     file_io_fn = lambda filename: file_io.FileIO(filename, "r")
-#     csv_kwargs = {
-#         "delimiter": field_delim,
-#         "quoting": csv.QUOTE_MINIMAL if use_quote_delim else csv.QUOTE_NONE
-#     }
-#     with file_io_fn(filename as f:
-#     try:
-#         column_names = next(csv.reader(f, **csv_kwargs))
-#     except StopIteration:
-#         raise ValueError("Received StopIteration when reading the header line "
-#                         "of %s.  Empty file?") % filename])
-#     return column_names
+   tfrecord_file = process_data_to_tfrecord(data=data, metadata=metadata)
+   train_data, test_data, val_data = load_process_tf_records(filename=tfrecord_file)
+   input_dimension = len(metadata.keys())
+   batch_size = train_hyperparameters['batch_size']
+   the_model = compile_model(input_dimension=input_dimension, batch_size=batch_size)
+   
