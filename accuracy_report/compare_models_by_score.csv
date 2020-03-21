@@ -1,0 +1,3 @@
+,accuracy score on test,cross_validation score on train,cross_validation on train
+xgb_classifier,0.9984,,0.9986666666666666
+rf_classifier,0.9968,,0.9981333333333333
