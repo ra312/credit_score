@@ -1,21 +1,32 @@
 train_hyperparameters = {
-   'dataset_size': 303,
    'batch_size': 32,
    'train_size': 0.7,
    'test_size': 0.15,
    'validate_size': 0.15,
    'steps_per_epoch': 1,
    'split_ratio': 0.75,
-   'num_epochs': 3,
-   'buffer_size': 303,
+   'num_epochs': 5,
+   'buffer_size': 32,
    'label_column': 'loan_status',
-   'shuffle': True
+   'shuffle': True,
+   'my_log_dir':'my_log_dir'
 }
+classification_parameters = dict()
 
+from os import system as zsh
 import pandas as pd
+import numpy as np
 import tensorflow as tf
 from tensorflow import feature_column
 from tensorflow.keras import layers
+from tensorflow.keras.optimizers import RMSprop
+
+from tensorflow.keras.callbacks import TensorBoard
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.callbacks import ModelCheckpoint
+from tensorflow.keras.callbacks import ReduceLROnPlateau
+from tensorflow.keras.backend import set_floatx
+set_floatx('float64')
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 label_encoder = LabelEncoder()
@@ -42,11 +53,8 @@ def split_data(dataframe):
    return train, test, val, cat_vocabulary, numerical_columns
 
 
-def load_and_trip(URL='data/loan_5k.csv'):
-   # URL = 'https://storage.googleapis.com/applied-dl/heart.csv'
-   # train_hyperparameters['label_column']='target'
-   train_hyperparameters['label_column'] = 'loan_status'
-   # train_hyperparameters['label_column']='loan_status'
+def load_and_trim(URL='data/loan_5k.csv'):
+
    pd.options.mode.use_inf_as_na = True
    dataframe = pd.read_csv(URL, sep=',', encoding='UTF-8', skipinitialspace=True)
    train_hyperparameters['batch_size'] = 1
@@ -73,6 +81,8 @@ def df_to_dataset(dataframe, shuffle=True, batch_size=32):
    labels = dataframe.pop(label_column)
 
    encoded_labels=label_encoder.fit_transform(labels)
+   classification_parameters['classes'] = list(set(encoded_labels))
+   encoded_labels = np.asarray(encoded_labels).astype('float32').reshape((-1, 1))
 
    ds = tf.data.Dataset.from_tensor_slices((dict(dataframe), encoded_labels))
 
@@ -104,38 +114,73 @@ def compile_feature_layer(cat_vocabulary, numerical_columns):
       column_one_hot = feature_column.indicator_column(column)
       feature_columns.append(column_one_hot)
 
-   feature_layer = tf.keras.layers.DenseFeatures(feature_columns, autocast=False)
+   feature_layer = tf.keras.layers.DenseFeatures(feature_columns, autocast=True)
    return feature_layer
 
 
 def main():
    # cat_voc, num_cols
    tf.keras.backend.set_floatx('float64')
-   dataframe = load_and_trip()
+   dataframe = load_and_trim()
    train, test, val, cat_voc, num_cols = split_data(dataframe=dataframe)
 
    feature_layer = compile_feature_layer(cat_vocabulary=cat_voc, numerical_columns=num_cols)
 
    batch_size = train_hyperparameters['batch_size']  # A small batch sized is used for demonstration purposes
+   num_epochs = train_hyperparameters['num_epochs']
+
    train_ds = df_to_dataset(train, batch_size=batch_size)
    val_ds = df_to_dataset(val, shuffle=False, batch_size=batch_size)
    test_ds = df_to_dataset(test, shuffle=False, batch_size=batch_size)
 
    tf.keras.backend.set_floatx('float64')
+   num_of_distinct_classes = len(classification_parameters['classes'])
+   # labels = classification_parameters['classes']
    model = tf.keras.Sequential([
       feature_layer,
-      layers.Dense(128, activation='relu'),
-      layers.Dense(128, activation='relu'),
-      layers.Dense(1)
+      layers.Dense(units=128, activation='relu'),
+      layers.Dense(units=128, activation='relu'),
+      layers.Dense(units=num_of_distinct_classes, activation='sigmoid')
    ])
-   model.compile(optimizer='adam',
-                 loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
+   the_optimizer = RMSprop()
+   # target = classification_parameters['classes']
+   # output = target
+   # the_loss_function = binary_crossentropy(target, output, from_logits=True)
+   model.compile(optimizer=the_optimizer,
+                 loss= 'categorical_crossentropy',
                  metrics=['accuracy'])
-   model.fit(train_ds,
-             validation_data=val_ds,
-             epochs=5)
+   callbacks = [
+      TensorBoard(
+         log_dir='my_log_dir',
+         histogram_freq=1,
+         embeddings_freq=1,
+      ),
+      EarlyStopping(
+         monitor='accuracy',
+         patience=1,
+      ),
+      ModelCheckpoint(
+         filepath='my_model.h5',
+         monitor='val_loss',
+         save_best_only=True,
+      ),
+      ReduceLROnPlateau(
+         monitor='val_loss',
+         factor = 0.1,
+         patience = 10
+      )
+   ]
+
+   history=model.fit(train_ds,
+             epochs=num_epochs,
+             callbacks=callbacks,
+             validation_data=val_ds
+              )
+   model.summary()
    loss, accuracy = model.evaluate(test_ds)
+   model.save('saved_models/dnn_model')
    print("Accuracy", accuracy)
+
 
 
 if __name__ == '__main__':
