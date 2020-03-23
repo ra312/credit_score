@@ -9,6 +9,7 @@ train_hyperparameters = {
    'buffer_size': 32,
    'label_column': 'loan_status',
    'shuffle': True,
+   'learning_rate':0.001,
    'my_log_dir':'my_log_dir'
 }
 classification_parameters = dict()
@@ -127,7 +128,7 @@ def main():
    feature_layer = compile_feature_layer(cat_vocabulary=cat_voc, numerical_columns=num_cols)
 
    batch_size = train_hyperparameters['batch_size']  # A small batch sized is used for demonstration purposes
-   num_epochs = train_hyperparameters['num_epochs']
+
 
    train_ds = df_to_dataset(train, batch_size=batch_size)
    val_ds = df_to_dataset(val, shuffle=False, batch_size=batch_size)
@@ -142,38 +143,25 @@ def main():
       layers.Dense(units=128, activation='relu'),
       layers.Dense(units=num_of_distinct_classes, activation='sigmoid')
    ])
-   the_optimizer = RMSprop()
+   learning_rate = train_hyperparameters['learning_rate']
+   the_optimizer = RMSprop(learning_rate=learning_rate)
    # target = classification_parameters['classes']
    # output = target
    # the_loss_function = binary_crossentropy(target, output, from_logits=True)
    model.compile(optimizer=the_optimizer,
-                 loss= 'categorical_crossentropy',
+                 loss= 'sparse_categorical_crossentropy',
                  metrics=['accuracy'])
    callbacks = [
       TensorBoard(
          log_dir='my_log_dir',
          histogram_freq=1,
          embeddings_freq=1,
-      ),
-      EarlyStopping(
-         monitor='accuracy',
-         patience=1,
-      ),
-      ModelCheckpoint(
-         filepath='my_model.h5',
-         monitor='val_loss',
-         save_best_only=True,
-      ),
-      ReduceLROnPlateau(
-         monitor='val_loss',
-         factor = 0.1,
-         patience = 10
       )
    ]
-
+   num_epochs = train_hyperparameters['num_epochs']
    history=model.fit(train_ds,
              epochs=num_epochs,
-             callbacks=callbacks,
+                     callbacks=callbacks,
              validation_data=val_ds
               )
    model.summary()
