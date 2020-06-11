@@ -1,0 +1,5 @@
+Account_No,Branch,Join_Date,Member_Since_Days,Gender,Age_Years,Occupation,Terminate_Date,No_of_Deposit_Accounts,No_of_Deposits_Transactions,Deposit_DB_Total_Amount,Is_Prompt_Depositer,No_of_Loans_Taken,Loan_Disburse_Date,Loan_Product_Name,Loan_Amount,Service_Charge_Amount,Loan_Maturity_Date,Required_Installments,No_of_Installments_Paid,Loan_Close_Date,Days_Closed_In,Foreclose_Status,Loan_Good_Or_Bad
+112013100001,Sanga Reddy,09-12-14,1877,M,56,Business Sales,null,2,4,320049,No,0,null,null,null,null,null,null,null,null,null,null,null
+112013100002,Sanga Reddy,09-12-14,1877,M,37,Business Service,null,2,4,135049,No,1,17-08-16,Demand Loan,50000,2000,15-11-16,90,2,16-09-16,30,Yes,Good
+112013100003,Sanga Reddy,09-12-14,1877,M,49,Pvt. Service,null,1,1,49,No,0,null,null,null,null,null,null,null,null,null,null,null
+112013100004,Sanga Reddy,09-12-14,1877,M,56,Business Sales,null,1,2,5050,No,0,null,null,null,null,null,null,null,null,null,null,null
