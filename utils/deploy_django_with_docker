@@ -1,0 +1,13 @@
+git clone https://github.com/Azure-Samples/docker-django-webapp-linux.git --config core.autocrlf=input
+
+cd docker-django-webapp-linux
+
+docker build --tag mydockerimage .
+
+docker run -p 8000:8000 mydockerimage
+
+az group create --name myResourceGroup --location "West Europe"
+
+az acr create --name <azure-container-registry-name> --resource-group myResourceGroup --sku Basic --admin-enabled true
+
+az acr credential show --name <azure-container-registry-name>
