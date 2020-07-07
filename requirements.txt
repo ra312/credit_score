@@ -98,7 +98,7 @@ dodgy==0.2.1
 dotnetcore2==2.1.13
 dparse==0.4.1
 entrypoints==0.3
-enum34==1.1.0
+enum-compat==0.0.2
 et-xmlfile==1.0.1
 Faker==4.0.0
 fastavro==0.21.24
