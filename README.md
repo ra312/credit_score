@@ -2,7 +2,7 @@
 
 ## Business background
 
-* The primary clients are consumer lending companies, banks deveoping new consumer products.
+* The primary clients are consumer lending companies, banks developing new consumer products.
 * Loan acceptance increase, profit increase
 
 ## Scope
