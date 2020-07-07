@@ -125,7 +125,7 @@ google-colab==1.0.0
 google-pasta==0.1.8
 google-resumable-media==0.4.1
 googleapis-common-protos==1.51.0
-gpg==1.13.1
+gpg==1.8.10
 gpt-2-simple==0.7.1
 graphviz==0.8.4
 grpc-google-iam-v1==0.12.3
