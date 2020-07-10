@@ -1,0 +1,4 @@
+conda env create --file env.yml
+#name: credit_score is the first line in env.yml
+conda activate credit_score
+python build_model.py
