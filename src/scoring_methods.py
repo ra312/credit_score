@@ -29,6 +29,11 @@ def gini_normalized_new(y_actual, y_pred):
             y_pred = y_pred[:, 1]
     gini = lambda a, p: 2 * roc_auc_score(a, p) - 1
     return gini(y_actual, y_pred) / gini(y_actual, y_actual)
+def custom_precision_score(y_true, y_pred):
+	conf_matrix = confusion_matrix(y_true=y_true, y_pred=y_pred)
+	tn, fp, fn, tp = conf_matrix.ravel()
+	return (tp+1)/(tn+tp)
+
 def custom_score_function(y_true, y_pred):
 	conf_matrix = confusion_matrix(y_true=y_true, y_pred=y_pred)
 	tn, fp, fn, tp = conf_matrix.ravel()
@@ -42,7 +47,7 @@ def custom_score_function(y_true, y_pred):
 	roc_auc_value = roc_auc_score(y_true=y_true, y_score=y_pred)
 	
 	return abs_gini
-    
+custom_precision_scorer = make_scorer(custom_precision_score, greater_is_better = True, needs_proba=True)    
 gini_scorer = make_scorer(normalized_gini, greater_is_better = True)
 new_gini_scorer = make_scorer(gini_normalized_new, greater_is_better = True, needs_proba=True)
 custom_scorer = make_scorer(custom_score_function, greater_is_better=True)

@@ -92,6 +92,7 @@ def build_model(X, y):
 
 if __name__ == '__main__':
 	raw_data_path = global_train_parameters['raw_data_path']
+	raw_data_path = 'train.csv'
 	X, y = process_data(raw_data_path)
     #X,y = make_classification(n_samples=50000, n_features=8, n_redundant=0,
 	#n_clusters_per_class=2, weights=[0.94], flip_y=0, random_state=random_state)

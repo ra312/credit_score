@@ -14,9 +14,9 @@ parent_dir = os.path.realpath(__file__)
     # going up to parent directory of the current directory
 for _ in range(2):
     parent_dir = os.path.dirname(parent_dir)
-from azureml.core.run import Run
-import azureml.core
-from azureml.core import Workspace, Datastore
+#from azureml.core.run import Run
+#import azureml.core
+#from azureml.core import Workspace, Datastore
 
 # Get PipelineData argument
 parser = argparse.ArgumentParser()
@@ -122,7 +122,7 @@ def extract_transform_load(raw_data_path):
     load input data, transform and save it
     Return: fitted encoder 
     """
-    data = pd.read_csv(raw_data_path, sep=',', encoding='UTF-8', skipinitialspace=True)
+    data = pd.read_csv(raw_data_path, sep=';', encoding='UTF-8', skipinitialspace=True)
     if missing(data):
         num_of_values = data.shape[0]*data.shape[1]
         num_of_missing = data.isnull().sum().sum()
@@ -139,14 +139,14 @@ def extract_transform_load(raw_data_path):
                         'No_of_Installments_Paid','Loan_Close_Date',
                         'Loan_Disburse_Date',
                         'Loan_Maturity_Date'] 
-    data = dropping_nan_features(data, nan_columns_to_drop)
+   # data = dropping_nan_features(data, nan_columns_to_drop)
     select_features = global_train_parameters['select_features']
     if select_features:
         print('select features {}'.format(select_features))
         data = process_features(data)
     target_column = global_train_parameters['target_column']
 
-    data = processing_nan_targets(data, target_column)
+    #data = processing_nan_targets(data, target_column)
     # num_of_nan_values = data.isnull().sum()
     # print(f'There are {num_of_nan_values} nan values left in the data!')
     if missing(data):
@@ -156,6 +156,7 @@ def extract_transform_load(raw_data_path):
     data = parsing_object_type_columns(data)
     processed_data, encoder  = encoding_data(data, encoder=encoder)
     processed_data_path = global_train_parameters['processed_data_path']
+    processed_data_path='train_processed.csv'
     processed_data.to_csv(processed_data_path, index=False)
     encoder_path = global_train_parameters['encoder_path']
     with open(encoder_path,'wb') as encoder_file:
@@ -236,8 +237,10 @@ gini_scorer = make_scorer(normalized_gini, greater_is_better = True)
 def process_data(raw_data_path):
     encoder = extract_transform_load(raw_data_path)
     processed_data_path = global_train_parameters['processed_data_path']
+    processed_data_path = 'train_processed.csv'
     X = pd.read_csv(processed_data_path)
     target_column = global_train_parameters['target_column']
+    target_column = 'TARGET'
     y = X.pop(target_column)
     encoder_path = os.path.join(parent_dir, 'models','sahulat_encoder.joblib')
     with open(encoder_path,'wb') as encoder_file:
