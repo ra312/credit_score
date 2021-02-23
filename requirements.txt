@@ -43,7 +43,7 @@ beautifulsoup4==4.8.2
 bert-for-tf2==0.13.2
 billiard==3.6.1.0
 biplist==1.0.3
-bleach==3.1.0
+bleach==3.3.0
 bleak==0.5.1
 blis==0.2.2
 bluetool==0.2.3
