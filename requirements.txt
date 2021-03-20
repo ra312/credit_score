@@ -159,7 +159,7 @@ jarvis-cli==0.19.0
 jdcal==1.4.1
 jedi==0.16.0
 jeepney==0.4.3
-Jinja2==2.10
+Jinja2==2.11.3
 jmespath==0.9.4
 joblib==0.14.1
 jsmin==2.2.2
