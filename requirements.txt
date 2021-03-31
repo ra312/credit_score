@@ -185,7 +185,7 @@ latexcodec==1.0.7
 lazy-object-proxy==1.4.1
 libsass==0.13.7
 lightgbm==2.3.1
-lxml==4.3.4
+lxml==4.6.3
 M2Crypto==0.35.2
 Markdown==3.2.1
 MarkupPy==1.14
