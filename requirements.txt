@@ -443,7 +443,7 @@ rinoh-typeface-texgyrecursor==0.1.1
 rinoh-typeface-texgyreheros==0.1.1
 rinoh-typeface-texgyrepagella==0.1.1
 rinohtype==0.2.1
-rsa==4.0
+rsa==4.7
 ruamel.yaml==0.15.89
 s3transfer==0.3.0
 sacremoses==0.0.38
