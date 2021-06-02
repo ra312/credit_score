@@ -529,7 +529,7 @@ tzlocal==2.0.0
 ujson==1.35
 update-checker==0.16
 uritemplate==3.0.0
-urllib3==1.24.3
+urllib3==1.26.5
 validators==0.14.2
 verboselogs==1.7
 vim-bridge==0.6
