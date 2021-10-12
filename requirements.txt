@@ -229,7 +229,7 @@ oauth2client==3.0.0
 oauthlib==3.1.0
 objgraph==3.4.1
 odfpy==1.4.1
-opencv-contrib-python==4.1.2.30
+opencv-contrib-python==4.2.0.32
 opencv-python==4.1.2.30
 openpyxl==3.0.3
 opt-einsum==3.2.0
