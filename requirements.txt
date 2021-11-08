@@ -214,7 +214,7 @@ murmurhash==0.28.0
 mxnet==1.5.1.post0
 Naked==0.1.31
 nbconvert==5.4.1
-nbdime==1.0.5
+nbdime==1.1.1
 nbformat==4.4.0
 ndg-httpsclient==0.5.1
 networkx==2.2
