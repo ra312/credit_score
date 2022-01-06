@@ -52,7 +52,7 @@ boto3==1.11.9
 botocore==1.14.9
 brotlipy==0.7.0
 cachetools==3.1.1
-celery==4.4.0
+celery==5.2.2
 certifi==2019.11.28
 cffi==1.13.2
 cfgv==2.0.1
