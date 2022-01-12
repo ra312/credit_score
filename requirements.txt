@@ -255,7 +255,7 @@ pip-conflict-checker==0.6.0
 pip-licenses==2.0.1
 pip-tools==4.4.0
 pipdeptree==0.13.2
-pipenv==2018.11.26
+pipenv==2022.1.8
 pipreqs==0.4.10
 plac==0.9.6
 pluggy==0.12.0
